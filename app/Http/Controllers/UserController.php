@@ -34,7 +34,11 @@ class UserController extends Controller
         // check if user already existe or not :
         $user = User::where("email", $request->input('email'))->first();
         if ($user) {
-            return response(["message" => "user already existe !"], Response::HTTP_BAD_REQUEST);
+            return  response()->json([
+                'errors' =>
+                ["user already existe !"]
+
+            ],  Response::HTTP_BAD_REQUEST);
         } else {
             // create user :
             $user =  User::create([
@@ -62,9 +66,10 @@ class UserController extends Controller
 
         // verfiy is user existe or not :
         if (!Auth::attempt($request->only('email', 'password'))) {
-            return response([
-                "message" => "Invalid credentials !"
-            ], Response::HTTP_UNAUTHORIZED);
+            return  response()->json([
+                'errors' =>
+                ["Invalid credentials !"]
+            ],   Response::HTTP_UNAUTHORIZED);
         }
 
         $user = Auth::user();
