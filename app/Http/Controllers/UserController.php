@@ -24,10 +24,18 @@ class UserController extends Controller
             'email.email' => 'Please provide a valid email address.',
             'password.required' => 'Please provide a password.',
         ]);
+        $errors = $validator->errors()->toArray();;
+
+        // Remove keys and return only error messages
+        $errors = array_map(function ($messages) {
+            return $messages[0];
+        }, array_values($errors));
+
+        // $errors now contains an array of error messages without keys
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors(),
+                'errors' => $errors,
             ], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -52,7 +60,6 @@ class UserController extends Controller
 
             return response([
                 "id" => $user->id,
-
                 "name" => $user->name,
                 "email" => $user->email,
                 "token" => $token

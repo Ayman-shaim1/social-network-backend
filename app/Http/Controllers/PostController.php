@@ -16,31 +16,38 @@ class PostController extends Controller
 
     public function index()
     {
-        return Post::all();
+        return Post::with('user')->with('likes')->with('comments')->orderBy('created_at', 'desc')->get();
     }
 
 
     public function create(Request $request)
     {
+        try {
+            $validator = Validator::make($request->all(), [
+                'content' => 'required',
+            ], [
+                'content.required' => 'Please provide a content text for creating a  post.',
+            ]);
 
-        $validator = Validator::make($request->all(), [
-            'content' => 'required',
-        ], [
-            'content.required' => 'Please provide a content text for creating a  post.',
-        ]);
+            if ($validator->fails()) {
+                return response()->json([
+                    'errors' => $validator->errors(),
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
 
-        if ($validator->fails()) {
+            $user = auth()->user();
+
+            $post =  Post::create([
+                "user_id" => $user->id,
+                "content" => $request->input('content'),
+            ]);
+
+            return $post->with('user')->with('likes')->with('comments');
+        } catch (\Throwable $th) {
             return response()->json([
-                'errors' => $validator->errors(),
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
+                'errors' => [$th->getMessage()]
+            ], Response::HTTP_BAD_REQUEST);
         }
-
-        $user = auth()->user();
-
-        return Post::create([
-            "user_id" => $user->id,
-            "content" => $request->input('content'),
-        ]);
     }
 
 
