@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware("auth:sanctum")->group(function () {
     Route::prefix("/posts")->group(function () {
         Route::get('/', [PostController::class, "index"]);
+        Route::get('/{id}', [PostController::class, "find"]);
+
         Route::post('/', [PostController::class, "create"]);
         Route::delete('/{id}', [PostController::class, "remove"]);
         Route::put('/togglelike/{id}', [PostController::class, "toggleLike"]);

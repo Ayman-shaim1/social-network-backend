@@ -16,9 +16,35 @@ class PostController extends Controller
 
     public function index()
     {
-        return Post::with('user')->with('likes')->with('comments')->orderBy('created_at', 'desc')->get();
+        try {
+            return Post::with('user', 'likes', 'comments')->orderBy('created_at', 'desc')->get();
+        } catch (\Throwable $th) {
+            return response()->json([
+                'errors' => [$th->getMessage()]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
+    public function find($id)
+    {
+        try {
+
+            $post =  Post::find($id);
+
+            if ($post) {
+                return Post::with('user', 'likes', 'comments.user')->find($id);
+            } else {
+                return response()->json([
+                    'errors' =>
+                    ["post not found !"]
+                ], Response::HTTP_NOT_FOUND);
+            }
+        } catch (\Throwable $th) {
+            return response()->json([
+                'errors' => [$th->getMessage()]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 
     public function create(Request $request)
     {
@@ -69,31 +95,37 @@ class PostController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => [$th->getMessage()]
-            ], Response::HTTP_BAD_REQUEST);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
 
     public function remove($id)
     {
-        $post = Post::find($id);
-        if ($post) {
-            $user = auth()->user();
+        try {
+            $post = Post::find($id);
+            if ($post) {
+                $user = auth()->user();
 
-            if ($post->user_id == $user->id) {
-                $post->delete();
-                return ["message" => "Post removed !"];
+                if ($post->user_id == $user->id) {
+                    $post->delete();
+                    return ["message" => "Post removed !"];
+                } else {
+                    return response()->json([
+                        'errors' =>
+                        ["you are not allowed to remove this post !"]
+                    ], Response::HTTP_BAD_REQUEST);
+                }
             } else {
                 return response()->json([
                     'errors' =>
-                    ["you are not allowed to remove this post !"]
-                ], Response::HTTP_BAD_REQUEST);
+                    ["post not found !"]
+                ], Response::HTTP_NOT_FOUND);
             }
-        } else {
+        } catch (\Throwable $th) {
             return response()->json([
-                'errors' =>
-                ["post not found !"]
-            ], Response::HTTP_NOT_FOUND);
+                'errors' => [$th->getMessage()]
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -123,7 +155,7 @@ class PostController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => [$th->getMessage()]
-            ], Response::HTTP_BAD_REQUEST);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -149,7 +181,7 @@ class PostController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => [$th->getMessage()]
-            ], Response::HTTP_BAD_REQUEST);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -181,7 +213,7 @@ class PostController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => [$th->getMessage()]
-            ], Response::HTTP_BAD_REQUEST);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
