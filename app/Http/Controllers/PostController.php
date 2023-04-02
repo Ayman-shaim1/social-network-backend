@@ -29,20 +29,43 @@ class PostController extends Controller
                 'content.required' => 'Please provide a content text for creating a  post.',
             ]);
 
+
+            $errors = $validator->errors()->toArray();;
+
+            $errors = array_map(function ($messages) {
+                return $messages[0];
+            }, array_values($errors));
+
+
             if ($validator->fails()) {
                 return response()->json([
-                    'errors' => $validator->errors(),
+                    'errors' => $errors,
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
+            }
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'errors' =>  $errors,
                 ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             $user = auth()->user();
 
-            $post =  Post::create([
+            $createdPost = Post::create([
                 "user_id" => $user->id,
                 "content" => $request->input('content'),
             ]);
 
-            return $post->with('user')->with('likes')->with('comments');
+            return response()->json([
+                "user_id" =>  $user->id,
+                "content" =>  $createdPost->content,
+                "updated_at" =>  $createdPost->updated_at,
+                "created_at" =>  $createdPost->created_at,
+                "id" =>  $createdPost->id,
+                "user" => $user,
+                "likes" => [],
+                "comments" => [],
+            ], Response::HTTP_CREATED);
         } catch (\Throwable $th) {
             return response()->json([
                 'errors' => [$th->getMessage()]

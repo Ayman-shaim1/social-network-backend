@@ -26,12 +26,10 @@ class UserController extends Controller
         ]);
         $errors = $validator->errors()->toArray();;
 
-        // Remove keys and return only error messages
         $errors = array_map(function ($messages) {
             return $messages[0];
         }, array_values($errors));
 
-        // $errors now contains an array of error messages without keys
 
         if ($validator->fails()) {
             return response()->json([
