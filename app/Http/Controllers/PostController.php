@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Comment;
 use App\Models\Like;
 use App\Models\Post;
+use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
@@ -28,9 +29,7 @@ class PostController extends Controller
     public function find($id)
     {
         try {
-
             $post =  Post::find($id);
-
             if ($post) {
                 return Post::with('user', 'likes', 'comments.user')->find($id);
             } else {
@@ -171,7 +170,13 @@ class PostController extends Controller
                     "content" => $request->input('content'),
                 ]);
 
-                return Post::find($id)->comments;
+                $array =  Post::with('comments.user')->find($id)->comments->toArray();
+
+                return usort($array, function ($a, $b) {
+                    $date_a = new DateTime($a['created_at']);
+                    $date_b = new DateTime($b['created_at']);
+                    return $date_a <=> $date_b;
+                });
             } else {
                 return response()->json([
                     'errors' =>
@@ -197,7 +202,7 @@ class PostController extends Controller
 
                 if ($findComment) {
                     Comment::find($idComment)->delete();
-                    return Post::find($idPost)->comments;
+                    return     Post::with('comments.user')->find($idPost)->comments->orderBy('created_at', 'desc');
                 } else {
                     return response()->json([
                         'errors' =>
