@@ -31,7 +31,9 @@ class PostController extends Controller
         try {
             $post =  Post::find($id);
             if ($post) {
-                return Post::with('user', 'likes', 'comments.user')->find($id);
+                return Post::with(['user', 'likes', 'comments' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }, 'comments.user'])->find($id);
             } else {
                 return response()->json([
                     'errors' =>
@@ -108,6 +110,8 @@ class PostController extends Controller
 
                 if ($post->user_id == $user->id) {
                     $post->delete();
+                    Like::where("post_id", $id)->delete();
+                    Comment::where("post_id", $id)->delete();
                     return ["message" => "Post removed !"];
                 } else {
                     return response()->json([
@@ -169,14 +173,9 @@ class PostController extends Controller
                     "post_id" => $post->id,
                     "content" => $request->input('content'),
                 ]);
-
-                $array =  Post::with('comments.user')->find($id)->comments->toArray();
-
-                return usort($array, function ($a, $b) {
-                    $date_a = new DateTime($a['created_at']);
-                    $date_b = new DateTime($b['created_at']);
-                    return $date_a <=> $date_b;
-                });
+                return Post::with(['comments' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                }, 'comments.user'])->find($id)->comments;
             } else {
                 return response()->json([
                     'errors' =>
@@ -202,7 +201,9 @@ class PostController extends Controller
 
                 if ($findComment) {
                     Comment::find($idComment)->delete();
-                    return     Post::with('comments.user')->find($idPost)->comments->orderBy('created_at', 'desc');
+                    return Post::with(['comments' => function ($query) {
+                        $query->orderBy('created_at', 'desc');
+                    }, 'comments.user'])->find($idPost)->comments;
                 } else {
                     return response()->json([
                         'errors' =>
